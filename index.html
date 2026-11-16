@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spinga</title>
+<meta name="theme-color" content="#0a1024">
+<meta name="description" content="Spinga: un puzzle da magazzino. Spingi le casse sui target, in memoria di Spinga.">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="stylesheet" href="style.css?v=14">
+</head>
+<body>
+<div class="app">
+  <header class="hud">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g stroke="#101526" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round">
+            <rect x="9.2" y="17.6" width="19.6" height="3.2" rx="1" fill="#ffcf3a"/>
+            <path d="M10.8 18.7h16.6" stroke="#fff3b0" stroke-width=".8" opacity=".85"/>
+            <rect x="8.4" y="12.4" width="5.4" height="7.2" rx="1.4" fill="#f5bc24"/>
+            <circle cx="12.4" cy="14.2" r="1" fill="#c98f12" stroke="none"/>
+            <path d="M11.2 13.6 6.6 5.4" stroke="#f5bc24" stroke-width="2.6"/>
+            <path d="M4.6 3.9 8.4 2.9" stroke="#20263a" stroke-width="2.6"/>
+            <circle cx="10.2" cy="22.6" r="2.8" fill="#20263a"/>
+            <circle cx="10.2" cy="22.6" r="1.1" fill="#8d99b5" stroke="none"/>
+            <circle cx="25.8" cy="23" r="2.4" fill="#20263a"/>
+            <circle cx="25.8" cy="23" r=".9" fill="#8d99b5" stroke="none"/>
+          </g>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>Spinga<span class="mem">- in loving memory</span></h1>
+        <p>spingi le casse sui target</p>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><span>Livello</span><strong id="statLevel">1 / 50</strong></div>
+      <div class="stat"><span>Mosse</span><strong id="statMoves">0</strong></div>
+      <div class="stat"><span>Spinte</span><strong id="statPushes">0</strong></div>
+      <div class="stat"><span>Tempo</span><strong id="statTime">0:00</strong></div>
+      <div class="stat"><span>Target</span><strong id="statGoals">0 / 0</strong></div>
+      <div class="stat"><span>Stelle</span><strong id="statStars" class="stars-sm">☆☆☆</strong></div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="btnUndo" title="Annulla ultima mossa (Z)">Annulla</button>
+      <button class="btn" id="btnRedo" title="Ripeti mossa annullata (Y)" disabled>Ripeti</button>
+      <button class="btn" id="btnRestart" title="Ricomincia livello (R)">Ricomincia</button>
+      <button class="btn" id="btnLevels" title="Seleziona livello (L)">Livelli</button>
+      <button class="btn ghost" id="btnPause" title="Pausa (P)">Pausa</button>
+      <button class="btn rage-btn" id="btnRage" title="Sclera: sfogo commemorativo, nessun effetto sul gioco" aria-haspopup="dialog">Sclera</button>
+      <button class="btn ghost" id="btnSound" title="Attiva/disattiva audio (M)">Audio: ON</button>
+      <button class="btn ghost" id="btnFull" title="Schermo intero (F)">Schermo</button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <canvas id="game" aria-label="Campo di gioco" tabindex="-1"></canvas>
+
+    <div class="rotate-hint">Ruota il telefono per ingrandire</div>
+
+    <div class="touchpad" id="touchpad" aria-hidden="true">
+      <button class="tbtn up" data-dir="0" aria-label="Su" tabindex="-1">&#9650;</button>
+      <button class="tbtn left" data-dir="3" aria-label="Sinistra" tabindex="-1">&#9664;</button>
+      <button class="tbtn down" data-dir="2" aria-label="Giù" tabindex="-1">&#9660;</button>
+      <button class="tbtn right" data-dir="1" aria-label="Destra" tabindex="-1">&#9654;</button>
+    </div>
+
+    <div class="overlay hidden" id="menuOverlay">
+      <div class="card menu-card" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
+        <div class="menu-logo" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g stroke="#101526" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round">
+              <rect x="9.2" y="17.6" width="19.6" height="3.2" rx="1" fill="#ffcf3a"/>
+              <path d="M10.8 18.7h16.6" stroke="#fff3b0" stroke-width=".8" opacity=".85"/>
+              <rect x="8.4" y="12.4" width="5.4" height="7.2" rx="1.4" fill="#f5bc24"/>
+              <circle cx="12.4" cy="14.2" r="1" fill="#c98f12" stroke="none"/>
+              <path d="M11.2 13.6 6.6 5.4" stroke="#f5bc24" stroke-width="2.6"/>
+              <path d="M4.6 3.9 8.4 2.9" stroke="#20263a" stroke-width="2.6"/>
+              <circle cx="10.2" cy="22.6" r="2.8" fill="#20263a"/>
+              <circle cx="10.2" cy="22.6" r="1.1" fill="#8d99b5" stroke="none"/>
+              <circle cx="25.8" cy="23" r="2.4" fill="#20263a"/>
+              <circle cx="25.8" cy="23" r=".9" fill="#8d99b5" stroke="none"/>
+            </g>
+          </svg>
+        </div>
+        <h2 id="menuTitle">Spinga</h2>
+        <p class="menu-dedica">In loving memory to Spinga</p>
+        <div class="menu-actions" id="menuActions">
+          <button class="btn primary" id="btnContinue">Continua</button>
+          <button class="btn" id="btnMenuLevels">Scegli livello</button>
+          <button class="btn" id="btnMenuSettings">Impostazioni</button>
+        </div>
+        <div class="settings hidden" id="settingsPanel" role="group" aria-label="Impostazioni">
+          <label class="setting">
+            <span>Volume</span>
+            <input type="range" id="setVolume" min="0" max="100" step="5" value="70">
+            <strong id="setVolumeVal">70%</strong>
+          </label>
+          <label class="setting">
+            <span>Riduci animazioni</span>
+            <input type="checkbox" id="setMotion">
+          </label>
+          <label class="setting">
+            <span>Vibrazione</span>
+            <input type="checkbox" id="setHaptics">
+          </label>
+          <label class="setting">
+            <span>Alto contrasto</span>
+            <input type="checkbox" id="setContrast">
+          </label>
+          <label class="setting">
+            <span>D-pad</span>
+            <select id="setPadSize">
+              <option value="sm">Piccolo</option>
+              <option value="md">Medio</option>
+              <option value="lg">Grande</option>
+            </select>
+          </label>
+          <label class="setting">
+            <span>Lato D-pad</span>
+            <select id="setPadSide">
+              <option value="right">Destra</option>
+              <option value="left">Sinistra</option>
+            </select>
+          </label>
+          <div class="setting">
+            <span>Schermo</span>
+            <button class="btn" id="btnSettingsFull" type="button">Schermo intero</button>
+          </div>
+          <button class="btn ghost" id="btnSettingsBack" type="button">Torna al menu</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="winOverlay">
+      <div class="card" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+        <div class="badge" aria-hidden="true">&#10003;</div>
+        <h2 id="winTitle">Livello completato</h2>
+        <div class="win-stars" id="winStars" aria-label="Stelle ottenute">☆☆☆</div>
+        <p class="win-stats" id="winStats"></p>
+        <p class="record hidden" id="winRecord">Nuovo record personale</p>
+        <div class="row">
+          <button class="btn primary" id="btnReplay">Rigioca</button>
+          <button class="btn primary" id="btnNext">Livello successivo</button>
+          <button class="btn" id="btnWinLevels">Livelli</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="levelsOverlay">
+      <div class="card wide" role="dialog" aria-modal="true" aria-labelledby="levelsTitle">
+        <div class="card-head">
+          <h2 id="levelsTitle">Seleziona livello</h2>
+          <button class="btn ghost icon" id="btnCloseLevels" aria-label="Chiudi">&#10005;</button>
+        </div>
+        <p class="hint">I livelli completati sono evidenziati. Le stelle dipendono dai tuoi record: una alla vittoria, poi una in più per ogni record migliorato.</p>
+        <div class="level-grid" id="levelGrid"></div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="confirmOverlay">
+      <div class="card" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+        <h2 id="confirmTitle">Ricominciare?</h2>
+        <p class="hint" id="confirmText">Le mosse di questo tentativo andranno perse.</p>
+        <div class="row">
+          <button class="btn primary" id="btnConfirmRestart">Ricomincia</button>
+          <button class="btn" id="btnConfirmCancel">Annulla</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="pauseOverlay">
+      <div class="card" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+        <h2 id="pauseTitle">In pausa</h2>
+        <p class="win-stats" id="pauseStats"></p>
+        <div class="row">
+          <button class="btn primary" id="btnResume">Continua</button>
+          <button class="btn" id="btnPauseRestart">Ricomincia</button>
+          <button class="btn" id="btnPauseLevels">Livelli</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="rageOverlay">
+      <div class="card rage-card" role="dialog" aria-modal="true" aria-labelledby="rageTitle">
+        <div class="rage-head">
+          <div>
+            <p class="rage-kicker">Pausa &middot; effetto commemorativo</p>
+            <h2 id="rageTitle">Sclera</h2>
+          </div>
+          <button class="btn ghost icon" id="btnRageClose" aria-label="Chiudi Sclera e torna al gioco">&#10005;</button>
+        </div>
+        <canvas id="rageCanvas" role="img" aria-label="Spinga perde le staffe: lancia il transpallet, tira fuori una forbice lunghissima e prende a testate il muro."></canvas>
+        <div class="rage-foot">
+          <div>
+            <p class="hint" id="rageCaption">Spinga sta per perdere le staffe&hellip;</p>
+            <p class="rage-note">Nessun effetto sul gioco &middot; il timer resta fermo</p>
+          </div>
+          <button class="btn primary" id="btnRageDone">Torna al gioco</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <span class="keys">Frecce / WASD per muoverti &middot; Z annulla &middot; Y ripeti &middot; R ricomincia &middot; P pausa &middot; L livelli &middot; M audio &middot; F schermo intero &middot; Esc menu</span>
+    <span class="dedication">In loving memory to Spinga</span>
+  </footer>
+  <div id="liveRegion" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+</div>
+<script src="levels.js?v=14"></script>
+<script src="game.js?v=14"></script>
+</body>
+</html>

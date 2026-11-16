@@ -33,6 +33,7 @@ selezione livelli, audio WebAudio, swipe e D-pad su mobile.
 - [x] Repository GitHub-ready: README con screenshot, licenza MIT sul codice, `.gitignore`
 - [x] Effetto commemorativo "Sclera": pulsante dedicato, popup animato, gioco in pausa
 - [x] Smartphone: campo più grande (HUD a colonna in orizzontale, margini ridotti, D-pad fuori dal labirinto)
+- [x] Vibrazione Android: tick sul passo, durate percepibili, prova dal menu impostazioni
 
 ## Principi
 

@@ -3,7 +3,7 @@
 
   // Spinga — Fase 2 P2: redo/ghost, conferma restart, pausa, accessibilità, mobile.
   // Grafica Fase 1: marching squares, ombre/AO, cache pavimento, materiali.
-  // Cache-busting: ?v=15 (layout smartphone: più spazio al campo, D-pad riservato).
+  // Cache-busting: ?v=16 (vibrazione Android: tick sul passo e durate percepibili).
 
   var LEVELS = Array.isArray(window.LEVELS) ? window.LEVELS : [];
   var canvas = document.getElementById('game');
@@ -72,8 +72,11 @@
 
   /* --------------------------------------------------------------- sound */
 
+  // Su Android la vibrazione parte solo dopo un tocco: i primi passi avvengono dopo
+  // il "Continua", quindi l'attivazione utente c'è già. Durate sotto i 10 ms molti
+  // telefoni non le rendono, per questo i tick stanno sui 12-18 ms.
   function buzz(pattern) {
-    if (!save.haptics || !navigator.vibrate) return;
+    if (!save.haptics || !navigator.vibrate || document.hidden) return;
     try { navigator.vibrate(pattern); } catch (e) { /* ignore */ }
   }
 
@@ -307,10 +310,10 @@
         box.pulse = 1;
         burst(bx, by, true);
         sfx.goal();
-        buzz([12, 40, 18]);
+        buzz([16, 30, 20]);
       } else {
         sfx.push();
-        buzz(10);
+        buzz(18);
       }
 
       if (checkWin()) win();
@@ -325,6 +328,7 @@
       moves++;
       startTimer();
       sfx.step();
+      buzz(12);
     }
 
     updateHud();
@@ -334,7 +338,7 @@
     player.bump = 1;
     player.bumpDir = dirIndex;
     sfx.thud();
-    buzz(8);
+    buzz(12);
   }
 
   function rememberTrail() {
@@ -392,7 +396,7 @@
       burst(+p[0], +p[1], false);
     });
     sfx.win();
-    buzz([25, 45, 25, 45, 60]);
+    buzz([30, 50, 30, 50, 70]);
 
     var prev = save.completed[levelIndex];
     var prevStars = prev && prev.stars ? prev.stars : (prev ? 1 : 0);
@@ -2772,7 +2776,7 @@
     save.haptics = this.checked;
     persist();
     syncSettingsUi();
-    if (save.haptics) buzz(12);
+    if (save.haptics) buzz([40, 60, 40]);
   });
 
   $('setContrast').addEventListener('change', function () {

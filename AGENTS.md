@@ -243,6 +243,20 @@ livello 1 (230 mosse, 97 spinte, 6/6, record salvato). Cache-busting a `?v=15`.
 - Limite noto: in verticale la larghezza del livello (fino a 20 celle) fissa il massimo
 della cella; per andare oltre servirebbe ruotare il labirinto (non fatto).
 
+## 2026-11-16 — Vibrazione su Android
+
+- Il passo semplice non vibrava affatto e le pulsazioni erano di 8–10 ms, sotto la soglia
+percepibile su molti telefoni. Ora: passo 12 ms, spinta 18 ms, spinta su target
+`[16, 30, 20]`, muro 12 ms, vittoria `[30, 50, 30, 50, 70]`.
+- Attivare "Vibrazione" nelle impostazioni produce una prova evidente (`[40, 60, 40]`).
+`buzz()` non vibra con `document.hidden`; su iOS `navigator.vibrate` non esiste e la
+funzione esce subito.
+- Verifiche: `navigator.vibrate` sostituito con uno stub in Chrome headless, tick sul passo
+registrato, pattern di target e di vittoria con la soluzione del livello 1, nessuna
+chiamata con la vibrazione spenta. Cache-busting a `?v=16`.
+- Promemoria: Android richiede un tocco prima di vibrare e Chrome ha un permesso per sito;
+se non si sente nulla, controllare il permesso del browser e il toggle nelle impostazioni.
+
 ## Prossimi passi
 
 Vedi `ROADMAP.md`, ordine consigliato:

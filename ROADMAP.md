@@ -34,6 +34,7 @@ selezione livelli, audio WebAudio, swipe e D-pad su mobile.
 - [x] Effetto commemorativo "Sclera": pulsante dedicato, popup animato, gioco in pausa
 - [x] Smartphone: campo più grande (HUD a colonna in orizzontale, margini ridotti, D-pad fuori dal labirinto)
 - [x] Vibrazione Android: tick sul passo, durate percepibili, prova dal menu impostazioni
+- [x] Pubblicato su GitHub (`Dario-Fe/Spinga`) con README, screenshot e Pages pronto
 
 ## Principi
 
@@ -114,12 +115,12 @@ Legenda: P1 = alta priorità, P2 = media, P3 = quando c'è tempo. S/M/L = sforzo
 
 ## Ordine consigliato
 
-1. Muri continui + ombre/AO + cache pavimento + casse migliori.
-2. Dedica in gioco + par/stelle + menu/impostazioni.
-3. Temi e polish effetti.
-4. PWA, fullscreen, vibrazione, accessibilità.
-5. Hint/solver e validazione automatica dei livelli.
-6. Editor, build `.exe`, localizzazione.
+Restano: temi e polish, solver, progressi esportabili, editor, build `.exe`, localizzazione.
+
+1. Temi ogni 10 livelli e polish effetti (Fase 1 residua).
+2. Hint/solver: sblocca anche i par ottimali delle stelle.
+3. Progressi esportabili e test automatici estesi ai 50 livelli.
+4. Editor, build `.exe`, localizzazione IT/EN.
 
 ## Note tecniche utili
 
@@ -138,6 +139,10 @@ Legenda: P1 = alta priorità, P2 = media, P3 = quando c'è tempo. S/M/L = sforzo
   worker non si registra (il gioco è comunque offline); via http(s) funziona anche offline.
 - Redo/ghost: lo stato delle mosse annullate è una pila di snapshot, svuotata da una mossa
   nuova o dal cambio livello; il ghost mostra le ultime 3 celle del giocatore.
+- Vibrazione (`buzz()`): passo 12 ms, spinta 18 ms, target `[16,30,20]`, muro 12 ms,
+  vittoria `[30,50,30,50,70]`, prova `[40,60,40]` dal menu. Esce in silenzio se la
+  vibrazione è spenta, se la pagina è nascosta o se il browser non espone `navigator.vibrate`
+  (iOS): l'assenza di vibrazione su un telefono non è quindi diagnosticabile dal codice.
 - Pausa: `P`, pulsante e `visibilitychange`; il timer usa `elapsed` e riparte da lì, quindi
   il tempo in background non viene conteggiato.
 - Backup delle release verificate in `releases/<data>-<fase>/`, con README e file runtime;

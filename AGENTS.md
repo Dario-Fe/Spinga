@@ -11,8 +11,10 @@ sul suo target. È dedicato a un collega magazziniere scomparso: tono sobrio, ne
 sfruttamento commerciale, nessuna pubblicazione di livelli o asset.
 
 - Uso: personale e commemorativo.
-- I livelli sono materiale del progetto: il repository resta privato, i livelli non si
-  ridistribuiscono e non si pubblicano su store o mirror.
+- Il repository pubblico su GitHub (`Dario-Fe/Spinga`) è la vetrina del gioco: `LICENSE`
+  copre solo il codice e `levels.js` ne resta escluso, ma un repo pubblico rende i livelli
+  scaricabili. È un limite accettato dall'autore, non un via libera a ridistribuirli su
+  store o mirror.
 - Nome visibile: **Spinga**. La cartella resta `CrateShift` per non rompere percorsi e
   script; non è un errore.
 
@@ -22,8 +24,9 @@ Aprire `index.html` in un browser moderno (Chrome/Edge). Nessun build, nessuna d
 nessun server richiesto. Tutto gira in locale. La PWA installabile richiede invece http(s)
 (es. `python -m http.server`); con `file://` il gioco resta comunque offline.
 
-Comandi: frecce/WASD, `Z` annulla, `R` ricomincia, `L` livelli, `M` audio, `Esc` chiude
-gli overlay. Su touch: swipe sul campo e D-pad in basso a destra.
+Comandi: frecce/WASD, `Z` annulla, `Y` ripeti, `R` ricomincia, `P` pausa, `L` livelli,
+`M` audio, `F` schermo intero, `Esc` chiude overlay e menu. Su touch: swipe sul campo,
+D-pad in basso a destra, pulsante Sclera per la pausa commemorativa.
 
 ## File
 
@@ -103,6 +106,12 @@ gli overlay. Su touch: swipe sul campo e D-pad in basso a destra.
   D-pad su mobile, alto contrasto, regressione livello 1).
 - Effetto Sclera: `node C:\Users\Archivio\AppData\Local\Temp\opencode\cstest\rage-test.js`
   (popup, pausa e timer fermo, chiusura manuale/Esc, fine automatica, mobile, zero errori).
+- Layout smartphone e D-pad: `node C:\Users\Archivio\AppData\Local\Temp\opencode\cstest\check-mobile.js`
+  (campo intero e nessuna sovrapposizione con il D-pad in 390×844, 320×568, 740×360,
+  844×390, anche con D-pad grande e a sinistra).
+- Vibrazione: `node C:\Users\Archivio\AppData\Local\Temp\opencode\cstest\check-haptics.js`
+  (stub di `navigator.vibrate`: tick sul passo, spinta, target, vittoria con la soluzione
+  del livello 1; zero chiamate con la vibrazione spenta, prova `[40,60,40]` dal menu).
 - Dopo ogni modifica a grafica o input: verificare desktop, viewport mobile e landscape,
   vittoria livello 1, undo, restart, persistenza record.
 - La cartella temp può essere pulita dal sistema: se mancano gli script, ricrearli o

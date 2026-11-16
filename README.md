@@ -32,7 +32,7 @@ Si apre e si gioca, anche da una chiavetta USB.
 
 ## Caratteristiche
 
-- **50 livelli** a difficoltà crescente, su griglie 20×16.
+- **50 livelli** a difficoltà crescente, su griglie fino a 20×16.
 - **Annulla e ripeti** illimitati, con ghost delle ultime posizioni e conferma prima di
   buttare via un tentativo lungo.
 - **Stelle e record** per livello: una alla vittoria, le altre migliorando le tue mosse.
@@ -42,7 +42,7 @@ Si apre e si gioca, anche da una chiavetta USB.
 - **PWA installabile**: manifest, service worker e cache offline quando il gioco è servito
   via HTTP.
 - **Mobile sul serio**: swipe sul campo, D-pad con dimensione e lato regolabili, vibrazione
-  opzionale, layout verticale e orizzontale.
+  al passo (dove il browser la espone: Android), layout verticale e orizzontale.
 - **Accessibilità**: focus trap nei dialoghi, `aria-live` per mosse e target, alto contrasto,
   `prefers-reduced-motion` rispettato.
 - **Sclera**: un pulsante commemorativo che mette il gioco in pausa e lascia sfogo al
@@ -69,7 +69,7 @@ Su touch: **swipe** sul campo di gioco oppure il **D-pad** in basso.
 Nessuna build, nessuna installazione.
 
 ```bash
-git clone <url-del-repository>
+git clone https://github.com/Dario-Fe/Spinga.git
 cd Spinga
 ```
 

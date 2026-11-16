@@ -3,7 +3,7 @@
 
   // Spinga — Fase 2 P2: redo/ghost, conferma restart, pausa, accessibilità, mobile.
   // Grafica Fase 1: marching squares, ombre/AO, cache pavimento, materiali.
-  // Cache-busting: ?v=14 (repository GitHub, README, testi senza riferimenti esterni).
+  // Cache-busting: ?v=15 (layout smartphone: più spazio al campo, D-pad riservato).
 
   var LEVELS = Array.isArray(window.LEVELS) ? window.LEVELS : [];
   var canvas = document.getElementById('game');
@@ -1572,16 +1572,41 @@
     computeLayout();
   }
 
+  // Falda riservata al D-pad, così il campo non ci finisce sotto.
+  function padReserve() {
+    var none = { left: 0, right: 0, bottom: 0 };
+    var pad = $('touchpad');
+    if (!pad || !view.w) return none;
+    if (window.getComputedStyle(pad).display === 'none') return none;
+    var r = pad.getBoundingClientRect();
+    if (!r.width || !r.height) return none;
+    var gap = 24; // margine dal bordo + respiro tra campo e pulsanti
+    // stessa condizione del CSS: HUD a colonna e D-pad di lato solo in orizzontale.
+    // Non usare il rapporto del palco: su schermi stretti è più largo che alto anche in verticale.
+    if (window.matchMedia('(orientation: landscape) and (max-height: 560px)').matches) {
+      // il D-pad sta di lato: si riserva la fascia laterale
+      if (document.documentElement.getAttribute('data-pad-side') === 'left') {
+        return { left: r.width + gap, right: 0, bottom: 0 };
+      }
+      return { left: 0, right: r.width + gap, bottom: 0 };
+    }
+    // in verticale si riserva la fascia in basso
+    return { left: 0, right: 0, bottom: r.height + gap };
+  }
+
   function computeLayout() {
     if (!level.w || !view.w) return;
-    var pad = 28;
-    var availW = Math.max(80, view.w - pad * 2);
-    var availH = Math.max(80, view.h - pad * 2);
+    // sui telefoni il margine si stringe: lo spazio va al labirinto
+    var edge = Math.min(view.w, view.h) < 560 ? 10 : 28;
+    var reserved = padReserve();
+    var availW = Math.max(80, view.w - reserved.left - reserved.right - edge * 2);
+    var availH = Math.max(80, view.h - reserved.bottom - edge * 2);
     var tile = Math.floor(Math.min(availW / level.w, availH / level.h));
-    tile = Math.max(12, Math.min(66, tile));
+    // nessun minimo che possa spingere il campo fuori dal palco
+    tile = Math.max(8, Math.min(66, tile));
     layout.tile = tile;
-    layout.ox = (view.w - level.w * tile) / 2;
-    layout.oy = (view.h - level.h * tile) / 2;
+    layout.ox = reserved.left + (view.w - reserved.left - reserved.right - level.w * tile) / 2;
+    layout.oy = (view.h - reserved.bottom - level.h * tile) / 2;
     staticDirty = true;
     buildStaticBoard();
   }
@@ -2764,6 +2789,7 @@
   $('setPadSize').addEventListener('change', function () {
     save.padSize = this.value;
     applyLookPrefs();
+    if (level.w) computeLayout();
     persist();
     sfx.ui();
   });
@@ -2771,6 +2797,7 @@
   $('setPadSide').addEventListener('change', function () {
     save.padSide = this.value;
     applyLookPrefs();
+    if (level.w) computeLayout();
     persist();
     sfx.ui();
   });

@@ -32,6 +32,7 @@ selezione livelli, audio WebAudio, swipe e D-pad su mobile.
 - [x] Fase 2 (P2 brevi): redo/ghost, conferma restart, pausa, accessibilità, mobile extra
 - [x] Repository GitHub-ready: README con screenshot, licenza MIT sul codice, `.gitignore`
 - [x] Effetto commemorativo "Sclera": pulsante dedicato, popup animato, gioco in pausa
+- [x] Smartphone: campo più grande (HUD a colonna in orizzontale, margini ridotti, D-pad fuori dal labirinto)
 
 ## Principi
 

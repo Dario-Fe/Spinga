@@ -221,6 +221,28 @@ gli overlay. Su touch: swipe sul campo e D-pad in basso a destra.
 - Screenshot del gioco in `docs/` per il README, generati con Puppeteer (desktop e mobile).
 - Repository git inizializzato con commit iniziale. Cache-busting e service worker a `v14`.
 
+## 2026-11-16 — Smartphone: più spazio al campo
+
+- **Orizzontale**: sotto i 560 px di altezza con puntatore coarse `.app` diventa una riga;
+l'HUD è una colonna stretta (146–184 px) con statistiche e pulsanti su due colonne, il
+footer sparisce e la dedica passa sotto il titolo. Larghezza del campo: 265 → 455 px su
+844×390 (+71%), 227 → 360 px su 740×360 (+58%).
+- **Margini**: su schermi piccoli il margine del campo scende da 28 a 10 px e il padding
+dell'app da 14/10 a 8 px (portrait 390: campo 302 → 340 px).
+- **D-pad**: `padReserve()` in `computeLayout` tiene il labirinto fuori dalla fascia dei
+pulsanti: lato in orizzontale (secondo `data-pad-side`), in basso in verticale. La scelta
+usa la stessa media query del CSS (`orientation: landscape and max-height: 560px`) e non
+il rapporto del palco: su schermi stretti il palco è più largo che alto anche in
+verticale (320×568 → palco 304×303) e il campo finiva tagliato a sinistra. Cambiare lato
+o dimensione del D-pad ricalcola subito il layout.
+- Il minimo della cella scende da 12 a 8 px, così non può più spingere il campo fuori dal
+palco.
+- Verifiche: nessuna sovrapposizione campo/D-pad in 390×844, 320×568, 740×360 e 844×390
+(D-pad anche grande e a sinistra), tocco D-pad → undo → restart con conferma, regressione
+livello 1 (230 mosse, 97 spinte, 6/6, record salvato). Cache-busting a `?v=15`.
+- Limite noto: in verticale la larghezza del livello (fino a 20 celle) fissa il massimo
+della cella; per andare oltre servirebbe ruotare il labirinto (non fatto).
+
 ## Prossimi passi
 
 Vedi `ROADMAP.md`, ordine consigliato:

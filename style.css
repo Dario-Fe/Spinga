@@ -1,5 +1,5 @@
 /* Spinga — Fase 2: stelle, menu, impostazioni, fullscreen */
-/* Cache-busting: ?v=14 */
+/* Cache-busting: ?v=15 */
 
 :root {
   color-scheme: dark;
@@ -629,4 +629,64 @@ html.contrast .stat { background: rgba(255, 255, 255, 0.07); }
 
 @media (prefers-reduced-motion: reduce) {
   .btn.rage-btn, .btn.rage-btn:hover { transition: none; transform: none; }
+}
+
+/* ---------- Smartphone: il campo prima della cornice ---------- */
+
+@media (pointer: coarse) {
+  .app { gap: 8px; padding: 8px 8px 6px; }
+}
+
+/* Orizzontale: HUD in colonna stretta, campo a tutta altezza. */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 560px) {
+  .app {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .hud {
+    flex: 0 0 auto;
+    width: clamp(146px, 20vw, 184px);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 7px;
+    padding: 8px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .brand { gap: 8px; }
+  .logo { width: 30px; height: 30px; border-radius: 9px; }
+  .logo svg { width: 24px; height: 24px; }
+  .brand-text h1 { font-size: 14px; }
+  .brand-text h1 .mem { display: block; margin: 1px 0 0; font-size: 7.5px; }
+
+  .stats {
+    order: 0;
+    width: 100%;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+  }
+
+  .stat { min-width: 0; padding: 3px 6px; border-radius: 9px; }
+  .stat > span { font-size: 7.5px; letter-spacing: 0.8px; }
+  .stat strong { font-size: 12px; }
+
+  .actions {
+    order: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+  }
+
+  .actions .btn { padding: 5px 3px; font-size: 10.5px; border-radius: 8px; }
+
+  .stage { border-radius: 14px; }
+  .footer { display: none; }
+  .overlay { padding: 10px; }
 }

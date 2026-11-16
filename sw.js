@@ -1,11 +1,11 @@
 /* Spinga — service worker: gioco offline quando servito via http(s). */
-var CACHE = 'spinga-v16';
+var CACHE = 'spinga-v17';
 var ASSETS = [
   './',
   './index.html',
-  './style.css?v=16',
-  './levels.js?v=16',
-  './game.js?v=16',
+  './style.css?v=17',
+  './levels.js?v=17',
+  './game.js?v=17',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',

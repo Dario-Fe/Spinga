@@ -77,7 +77,10 @@ D-pad in basso a destra, pulsante Sclera per la pausa commemorativa.
   blocca i movimenti e il focus resta intrappolato nel dialogo visibile (`trapTab`).
 - Sclera: overlay dedicato con canvas separato e timeline di ~10 s (transpallet, forbice
   lunga, testate). Apre con pausa "silenziosa" e chiude con `resumeGame()`; nessun impatto
-  su stato, mosse o record.
+  su stato, mosse o record. Parte anche da solo dopo 60 s senza mosse mentre si gioca
+  (`checkIdleRage` nel loop): il minuto scorre solo senza overlay aperti e si riarma con
+  `noteActivity()` a ogni mossa, undo/redo, pausa e cambio livello. Stesso overlay, stessa
+  pausa, nessun effetto su stato, mosse o record.
 - Redo/ghost: `redoStack` di snapshot svuotato da mossa nuova o cambio livello; il ghost
   disegna le ultime 3 celle del giocatore. Restart chiede conferma oltre 20 mosse.
 - Pausa: `P`, pulsante e `visibilitychange`; il timer si basa su `elapsed` e non conta il
@@ -265,6 +268,17 @@ registrato, pattern di target e di vittoria con la soluzione del livello 1, ness
 chiamata con la vibrazione spenta. Cache-busting a `?v=16`.
 - Promemoria: Android richiede un tocco prima di vibrare e Chrome ha un permesso per sito;
 se non si sente nulla, controllare il permesso del browser e il toggle nelle impostazioni.
+
+## 2026-11-16 — Sclera automatica dopo un minuto di inattività
+
+- Dopo 60 s senza mosse (mossa, anche contro il muro, undo/redo, ripresa dalla pausa,
+  cambio livello) parte da solo l'effetto Sclera: il gioco va in pausa "silenziosa" come
+  con il pulsante e riprende da dov'era alla chiusura. Timer, mosse e record restano
+  intatti; nessun trigger con menu, pausa, overlay o livello completato aperti.
+- `checkIdleRage()` gira nel loop e usa `lastActivity`, riarmato da `noteActivity()`.
+- Verifiche: `node --check game.js` e prova headless (menu chiuso, attesa > 60 s, popup
+  Sclera aperto, timer fermo, chiusura con Esc e ripresa senza mosse perse).
+  Cache-busting e service worker a `v17`.
 
 ## Prossimi passi
 

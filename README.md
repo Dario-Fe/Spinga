@@ -46,7 +46,8 @@ Si apre e si gioca, anche da una chiavetta USB.
 - **Accessibilità**: focus trap nei dialoghi, `aria-live` per mosse e target, alto contrasto,
   `prefers-reduced-motion` rispettato.
 - **Sclera**: un pulsante commemorativo che mette il gioco in pausa e lascia sfogo al
-  magazziniere. Nessun effetto su mosse, tempo o record.
+  magazziniere; parte da solo dopo un minuto senza mosse, quando il livello si fa duro.
+  Nessun effetto su mosse, tempo o record.
 
 ## Comandi
 

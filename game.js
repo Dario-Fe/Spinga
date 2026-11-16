@@ -3,7 +3,7 @@
 
   // Spinga — Fase 2 P2: redo/ghost, conferma restart, pausa, accessibilità, mobile.
   // Grafica Fase 1: marching squares, ombre/AO, cache pavimento, materiali.
-  // Cache-busting: ?v=16 (vibrazione Android: tick sul passo e durate percepibili).
+  // Cache-busting: ?v=17 (Sclera automatica dopo un minuto di inattività).
 
   var LEVELS = Array.isArray(window.LEVELS) ? window.LEVELS : [];
   var canvas = document.getElementById('game');
@@ -170,6 +170,7 @@
   var won = false;
   var particles = [];
   var shake = 0;
+  var lastActivity = 0;
   var lastTimerPaint = 0;
 
   var view = { w: 0, h: 0 };
@@ -269,6 +270,7 @@
 
   function tryMove(dirIndex) {
     if (won || paused || !level.w) return false;
+    noteActivity();
     var dir = DIRS[dirIndex];
     player.dir = dirIndex;
 
@@ -364,6 +366,7 @@
 
   function undo() {
     if (won || paused || !history.length) return;
+    noteActivity();
     redoStack.push(snapshot());
     restoreSnap(history.pop());
     updateHud();
@@ -372,6 +375,7 @@
 
   function redo() {
     if (won || paused || !redoStack.length) return;
+    noteActivity();
     history.push(snapshot());
     restoreSnap(redoStack.pop());
     updateHud();
@@ -478,6 +482,7 @@
     particles = [];
     shake = 0;
     lastTimerPaint = 0;
+    noteActivity();
     ++winToken;
     staticDirty = true;
 
@@ -624,6 +629,7 @@
       startTs = performance.now() - elapsed;
     }
     updateHud();
+    noteActivity();
     restoreFocus();
   }
 
@@ -780,6 +786,7 @@
       started = true;
       startTs = performance.now() - elapsed;
     }
+    noteActivity();
     updateHud();
     restoreFocus();
     announce('Ripreso');
@@ -795,6 +802,7 @@
   // Effetto commemorativo e puramente decorativo: il gioco resta in pausa e
   // riprende esattamente da dove era quando il popup si chiude.
   var RAGE_MS = 10400;
+  var IDLE_RAGE_MS = 60000;
   var rageCanvas = $('rageCanvas');
   var rctx = rageCanvas ? rageCanvas.getContext('2d') : null;
   var rage = { open: false, raf: 0, start: 0, last: 0, w: 0, h: 0, parts: [], fx: {}, caption: '' };
@@ -1525,6 +1533,22 @@
       return;
     }
     rage.raf = window.requestAnimationFrame(rageLoop);
+  }
+
+  // Dopo un minuto senza mosse il gioco sottolinea da solo il momento di difficoltà:
+  // stesso overlay del pulsante, stessa pausa, nessun effetto su mosse, tempo e record.
+  function noteActivity() {
+    lastActivity = performance.now();
+  }
+
+  function checkIdleRage() {
+    // fuori dal gioco (menu, pausa, overlay) il minuto di inattività non scorre
+    if (rage.open || won || paused || !level.w || levelsOpen()) {
+      noteActivity();
+      return;
+    }
+    if (performance.now() - lastActivity < IDLE_RAGE_MS) return;
+    openRage();
   }
 
   function openRage() {
@@ -2618,6 +2642,7 @@
     var dt = Math.min(0.05, (t - lastFrame) / 1000);
     lastFrame = t;
     update(dt, t);
+    checkIdleRage();
     render(t);
     window.requestAnimationFrame(frame);
   }

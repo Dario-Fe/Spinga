@@ -32,6 +32,7 @@ selezione livelli, audio WebAudio, swipe e D-pad su mobile.
 - [x] Fase 2 (P2 brevi): redo/ghost, conferma restart, pausa, accessibilità, mobile extra
 - [x] Repository GitHub-ready: README con screenshot, licenza MIT sul codice, `.gitignore`
 - [x] Effetto commemorativo "Sclera": pulsante dedicato, popup animato, gioco in pausa
+- [x] Sclera automatica dopo 60 s di inattività (stessa pausa, nessun effetto sul gioco)
 - [x] Smartphone: campo più grande (HUD a colonna in orizzontale, margini ridotti, D-pad fuori dal labirinto)
 - [x] Vibrazione Android: tick sul passo, durate percepibili, prova dal menu impostazioni
 - [x] Pubblicato su GitHub (`Dario-Fe/Spinga`) con README, screenshot e Pages pronto

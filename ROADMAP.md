@@ -9,7 +9,7 @@ Lo stato avanza segnando le caselle; la cronologia delle scelte sta in `AGENTS.m
 ## Stato attuale
 
 Gioco funzionante e giocabile: 50 livelli,
-grafica Canvas 2D flat 2.5D, HUD, annulla/ricomincia, timer, record per livello,
+grafica Canvas 2D flat 2.5D con 5 temi, HUD, annulla/ricomincia, timer, record per livello,
 selezione livelli, audio WebAudio, swipe e D-pad su mobile.
 
 - [x] Estrazione e validazione dei 50 livelli
@@ -36,6 +36,8 @@ selezione livelli, audio WebAudio, swipe e D-pad su mobile.
 - [x] Smartphone: campo più grande (HUD a colonna in orizzontale, margini ridotti, D-pad fuori dal labirinto)
 - [x] Vibrazione Android: tick sul passo, durate percepibili, prova dal menu impostazioni
 - [x] Pubblicato su GitHub (`Dario-Fe/Spinga`) con README, screenshot e Pages pronto
+- [x] Temi e polish Fase 1: 5 temi ogni 10 livelli, particelle ambientali, transizioni,
+      flash target, coriandoli e zoom lento alla vittoria
 
 ## Principi
 
@@ -66,9 +68,10 @@ Legenda: P1 = alta priorità, P2 = media, P3 = quando c'è tempo. S/M/L = sforzo
 - [x] **Protagonista** (fatto): omino magro con cappello e gilet ad alta visibilità che
       spinge un transpallet; sprite orientato nelle 4 direzioni, forcelle disegnate sotto
       la cassa quando la spinge, passo animato.
-- [ ] **Temi ogni 10 livelli** (P2, L): magazzino, ghiaccio, deserto, giardino notturno,
-      spazio. Palette, particelle e suoni dedicati, transizione tra temi.
-- [ ] **Polish effetti** (P2, S): flash sul target, coriandoli e zoom lento alla vittoria,
+- [x] **Temi ogni 10 livelli** (P2, L): magazzino, ghiaccio, deserto, giardino notturno,
+      spazio. Palette canvas e CSS, particelle ambientali, suoni e meta theme-color dedicati,
+      crossfade tra temi. Il tema segue il livello (1–10, 11–20, …), senza selettore manuale.
+- [x] **Polish effetti** (P2, S): flash sul target, coriandoli e zoom lento alla vittoria,
       fade/slide tra livelli, sfondo a parallasse al posto dei puntini fissi.
 - [ ] **Modalità retro pixel** (P3, M): variante opzionale in stile anni '80, stesso motore.
 - [x] **Dedica in gioco** (P1, S): "In loving memory to Spinga" nel footer e
@@ -76,14 +79,17 @@ Legenda: P1 = alta priorità, P2 = media, P3 = quando c'è tempo. S/M/L = sforzo
 
 ## Fase 2 — Gioco e UX
 
-- [x] **Par e stelle** (P1, M): 3 stelle su record personali di mosse (1 alla vittoria,
-      +1 a ogni record migliorato del 5%, +1 al 15%); record e stelle in HUD e nella
-      griglia livelli. I par ottimali per livello richiedono il solver: rimandati.
+- [x] **Par e stelle** (P1, M): 3 stelle sulle spinte rispetto al par (con par noto:
+      2 entro il +35%, 3 entro il +10%; senza par vale il record personale come prima);
+      par in `par.js` da `tools/solve.js`, mostrato in vittoria e nei titoli dei livelli.
 - [x] **Menu iniziale e impostazioni** (P1, M): Continua / Scegli livello / Impostazioni
-      (volume, animazioni ridotte, fullscreen), riapribile con Esc. Il selettore tema
-      arriverà insieme ai temi della Fase 1.
-- [ ] **Hint e auto-solve** (P2, L): solutore A* offline per suggerire la prossima spinta o
-      mostrare la soluzione, utile anche a validare i 50 livelli.
+      (volume, animazioni ridotte, fullscreen), riapribile con Esc. I temi seguono il
+      livello, quindi non serve un selettore manuale.
+- [x] **Solutore offline** (P2, L): `tools/solve.js`, A* sulle spinte con celle morte
+      (BFS inversa) e deadlock, beam e greedy di riserva, `--map`/`--stats`. Dimostra il
+      par dove chiude (oggi il livello 1) e verifica la solvibilità dei livelli.
+- [ ] **Hint e auto-solve** (P2, L): usare lo stesso solutore in gioco per suggerire la
+      prossima spinta o mostrare la soluzione.
 - [x] **Redo e ghost** (P2, S): `Y`/pulsante Ripeti, ghost delle ultime 3 posizioni,
       conferma su restart dopo 20 mosse.
 - [ ] **Progressi esportabili** (P2, M): export/import JSON, statistiche globali, reset.
@@ -116,17 +122,19 @@ Legenda: P1 = alta priorità, P2 = media, P3 = quando c'è tempo. S/M/L = sforzo
 
 ## Ordine consigliato
 
-Restano: temi e polish, solver, progressi esportabili, editor, build `.exe`, localizzazione.
+Restano: copertura dei par, hint, progressi esportabili, editor, build `.exe`,
+localizzazione.
 
-1. Temi ogni 10 livelli e polish effetti (Fase 1 residua).
-2. Hint/solver: sblocca anche i par ottimali delle stelle.
-3. Progressi esportabili e test automatici estesi ai 50 livelli.
-4. Editor, build `.exe`, localizzazione IT/EN.
+1. Copertura dei par: oggi solo i livelli chiusi da A* hanno un par dimostrato; il
+   livello 2 è risolvibile con beam largo (par 133), ma il default del solver è troppo
+   stretto. Poi l'hint in gioco sullo stesso solutore.
+2. Progressi esportabili e test automatici estesi ai 50 livelli.
+3. Editor, build `.exe`, localizzazione IT/EN.
 
 ## Note tecniche utili
 
-- Cartella progetto: `C:\Users\Archivio\Desktop\CrateShift` (il nome della cartella resta
-  per non rompere link e script; il nome visibile del gioco è **Spinga**).
+- Cartella progetto: `D:\AI\Spinga\CrateShift` (il nome della cartella resta per non
+  rompere link e script; il nome visibile del gioco è **Spinga**).
 - Salvataggi: chiave `spinga.save.v1`, con migrazione automatica dalla vecchia
   `crateshift.save.v1`.
 - Responsive già attivo: `100dvh`, HUD che va a capo, breakpoint 860px e 520px,
@@ -134,8 +142,15 @@ Restano: temi e polish, solver, progressi esportabili, editor, build `.exe`, loc
 - Il livello 1 è il riferimento di regressione: soluzione ufficiale da 230 mosse / 97 spinte.
 - `staticBoard` è una cache offscreen di solo pavimento e muri, ricostruita al cambio
   livello e al resize: mai dentro il ciclo delle mosse, dove costerebbe un frame perso.
-- Stelle: 1 alla prima vittoria, +1 per record di mosse migliorato del 5% e del 15%.
-  I par ottimali non sono ancora calcolati: servirebbe il solver della Fase 2.
+- Temi: `THEMES` in `game.js`, `themeForLevel(i) = floor(i / 10)`; palette canvas,
+  variabili CSS `--accent`/`--gold` e `theme-color` aggiornati da `applyTheme()`. Le
+  particelle ambientali stanno in `drawAmbient()` e non entrano nella cache statica.
+- Stelle: 1 alla prima vittoria; con par noto (`par.js`) 2 entro il 35% di spinte in più
+  e 3 entro il 10%, altrimenti record di mosse migliorato del 5% / 15%.
+- Par: `node tools/solve.js --write` rigenera `par.js`. Oggi il par è dimostrato solo
+  dove A* chiude (livello 1, 97 spinte): i livelli con molte casse non sono alla portata
+  di una ricerca rapida. Il livello 2 è risolvibile con beam largo (`par 133`), ma il
+  default del solver è troppo stretto (vedi `AGENTS.md`).
 - PWA: `manifest.webmanifest`, `sw.js` e icone in `icons/`. Con `file://` il service
   worker non si registra (il gioco è comunque offline); via http(s) funziona anche offline.
 - Redo/ghost: lo stato delle mosse annullate è una pila di snapshot, svuotata da una mossa

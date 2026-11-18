@@ -3,9 +3,18 @@
 
   // Spinga — Fase 2 P2: redo/ghost, conferma restart, pausa, accessibilità, mobile.
   // Grafica Fase 1: marching squares, ombre/AO, cache pavimento, materiali.
-  // Cache-busting: ?v=17 (Sclera automatica dopo un minuto di inattività).
+  // Cache-busting: ?v=19 (temi e polish Fase 1; par delle spinte da tools/solve.js).
 
   var LEVELS = Array.isArray(window.LEVELS) ? window.LEVELS : [];
+  var PAR = Array.isArray(window.LEVELS_PAR) ? window.LEVELS_PAR : [];
+
+  // par.js può contenere null (livello senza par certo) o { par, ex }.
+  function parFor(i) {
+    var entry = PAR[i];
+    if (typeof entry === 'number' && entry > 0) return entry;
+    if (entry && typeof entry.par === 'number' && entry.par > 0) return entry.par;
+    return null;
+  }
   var canvas = document.getElementById('game');
   var ctx = canvas.getContext('2d');
   var stage = document.querySelector('.stage');
@@ -59,11 +68,154 @@
   reduceMotion = save.motion === 'reduce' || (save.motion !== 'full' && osReduce);
   var highContrast = !!save.contrast;
 
+  /* --------------------------------------------------------------- themes */
+
+  var THEMES = [
+    {
+      id: 'magazzino', name: 'Magazzino',
+      bg: ['#0a0f22', '#0c132c', '#111938'],
+      glow: 'rgba(96, 128, 255, 0.12)',
+      glow2: 'rgba(167, 139, 250, 0.16)',
+      floor: ['#131a34', '#151d3b'],
+      floorLight: 'rgba(140, 170, 235, 0.05)',
+      floorDark: 'rgba(0, 0, 0, 0.10)',
+      wallShadow: ['#111833', '#060a16'],
+      wall: ['#6a7aba', '#4e5b98', '#343f70'],
+      wallEdge: 'rgba(214, 229, 255, 0.46)',
+      wallLine: 'rgba(6, 9, 20, 0.5)',
+      goal: '110, 231, 255', goalBright: '180, 248, 255', goalOn: '255, 205, 100',
+      light: 'rgba(150, 190, 255, 0.055)', vignette: 'rgba(0, 0, 0, 0.16)',
+      ambient: 'dust', ambientColor: 'rgba(205, 222, 255, 0.07)',
+      burstHue: 190, dustHue: 215, dustSat: 16, dustLight: 74,
+      accent: '#6ee7ff', accent2: '#a78bfa', gold: '#ffcf6b', meta: '#0a1024',
+      confetti: ['#6ee7ff', '#a78bfa', '#ffcf6b', '#34d399']
+    },
+    {
+      id: 'ghiaccio', name: 'Ghiaccio',
+      bg: ['#071420', '#0a2030', '#0d2c40'],
+      glow: 'rgba(120, 220, 255, 0.16)',
+      glow2: 'rgba(125, 211, 252, 0.14)',
+      floor: ['#123244', '#153a4e'],
+      floorLight: 'rgba(190, 245, 255, 0.07)',
+      floorDark: 'rgba(0, 8, 16, 0.14)',
+      wallShadow: ['#0a2233', '#041018'],
+      wall: ['#9fd8ea', '#6db4d0', '#4b8aa8'],
+      wallEdge: 'rgba(235, 250, 255, 0.55)',
+      wallLine: 'rgba(3, 20, 30, 0.55)',
+      goal: '140, 245, 255', goalBright: '220, 255, 255', goalOn: '255, 235, 170',
+      light: 'rgba(180, 240, 255, 0.07)', vignette: 'rgba(0, 8, 16, 0.18)',
+      ambient: 'snow', ambientColor: 'rgba(225, 250, 255, 0.12)',
+      burstHue: 185, dustHue: 190, dustSat: 20, dustLight: 88,
+      accent: '#7dd3fc', accent2: '#c4b5fd', gold: '#fde68a', meta: '#071420',
+      confetti: ['#bae6fd', '#e0f2fe', '#c4b5fd', '#fde68a']
+    },
+    {
+      id: 'deserto', name: 'Deserto',
+      bg: ['#1a0f0a', '#2a170e', '#3a2010'],
+      glow: 'rgba(255, 170, 90, 0.16)',
+      glow2: 'rgba(251, 146, 60, 0.14)',
+      floor: ['#3a2618', '#422c1c'],
+      floorLight: 'rgba(255, 220, 160, 0.07)',
+      floorDark: 'rgba(0, 0, 0, 0.14)',
+      wallShadow: ['#2a160c', '#120804'],
+      wall: ['#c98b56', '#a96a3c', '#7f4a28'],
+      wallEdge: 'rgba(255, 225, 190, 0.5)',
+      wallLine: 'rgba(40, 18, 8, 0.55)',
+      goal: '255, 210, 110', goalBright: '255, 240, 190', goalOn: '255, 245, 200',
+      light: 'rgba(255, 190, 120, 0.06)', vignette: 'rgba(20, 8, 0, 0.18)',
+      ambient: 'sand', ambientColor: 'rgba(255, 210, 150, 0.10)',
+      burstHue: 45, dustHue: 35, dustSat: 30, dustLight: 78,
+      accent: '#fbbf24', accent2: '#fb923c', gold: '#fde68a', meta: '#1a0f0a',
+      confetti: ['#fbbf24', '#fb923c', '#fde68a', '#f87171']
+    },
+    {
+      id: 'giardino', name: 'Giardino notturno',
+      bg: ['#06140f', '#0a2118', '#0d2c20'],
+      glow: 'rgba(80, 220, 150, 0.14)',
+      glow2: 'rgba(163, 230, 53, 0.12)',
+      floor: ['#102a20', '#143126'],
+      floorLight: 'rgba(170, 255, 210, 0.06)',
+      floorDark: 'rgba(0, 0, 0, 0.14)',
+      wallShadow: ['#0a1e16', '#030c08'],
+      wall: ['#5f9e7d', '#3f7a5e', '#2a5843'],
+      wallEdge: 'rgba(210, 255, 230, 0.42)',
+      wallLine: 'rgba(4, 20, 12, 0.55)',
+      goal: '130, 255, 180', goalBright: '210, 255, 225', goalOn: '255, 225, 140',
+      light: 'rgba(140, 255, 190, 0.05)', vignette: 'rgba(0, 10, 4, 0.18)',
+      ambient: 'fireflies', ambientColor: 'rgba(190, 255, 150, 0.18)',
+      burstHue: 140, dustHue: 130, dustSat: 18, dustLight: 70,
+      accent: '#6ee7b7', accent2: '#a3e635', gold: '#fde68a', meta: '#06140f',
+      confetti: ['#6ee7b7', '#a3e635', '#fde68a', '#5eead4']
+    },
+    {
+      id: 'spazio', name: 'Spazio',
+      bg: ['#080416', '#0d0826', '#140b34'],
+      glow: 'rgba(160, 110, 255, 0.18)',
+      glow2: 'rgba(244, 114, 182, 0.14)',
+      floor: ['#1a1440', '#1f194a'],
+      floorLight: 'rgba(200, 170, 255, 0.07)',
+      floorDark: 'rgba(0, 0, 0, 0.16)',
+      wallShadow: ['#120b2a', '#05030f'],
+      wall: ['#8d7ac8', '#64549e', '#433773'],
+      wallEdge: 'rgba(230, 220, 255, 0.45)',
+      wallLine: 'rgba(8, 4, 20, 0.55)',
+      goal: '190, 160, 255', goalBright: '235, 225, 255', goalOn: '255, 220, 140',
+      light: 'rgba(190, 160, 255, 0.07)', vignette: 'rgba(4, 0, 16, 0.18)',
+      ambient: 'stars', ambientColor: 'rgba(230, 230, 255, 0.14)',
+      burstHue: 265, dustHue: 260, dustSat: 22, dustLight: 78,
+      accent: '#c4b5fd', accent2: '#f472b6', gold: '#fde68a', meta: '#080416',
+      confetti: ['#c4b5fd', '#f472b6', '#fde68a', '#a5b4fc']
+    }
+  ];
+
+  function themeForLevel(i) {
+    return Math.max(0, Math.min(THEMES.length - 1, Math.floor(i / 10)));
+  }
+
+  function applyThemeCss(th) {
+    var root = document.documentElement;
+    root.setAttribute('data-theme', th.id);
+    root.style.setProperty('--accent', th.accent);
+    root.style.setProperty('--accent-2', th.accent2);
+    root.style.setProperty('--gold', th.gold);
+    root.style.setProperty('--theme-bg-1', th.bg[0]);
+    root.style.setProperty('--theme-bg-2', th.bg[1]);
+    root.style.setProperty('--theme-bg-3', th.bg[2]);
+    root.style.setProperty('--theme-glow', th.glow);
+    root.style.setProperty('--theme-glow-2', th.glow2 || th.glow);
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', th.meta);
+  }
+
+  function applyTheme(i) {
+    var next = Math.max(0, Math.min(THEMES.length - 1, i));
+    if (next !== activeTheme) {
+      prevThemeIndex = activeTheme;
+      themeFade = reduceMotion ? 0 : 1;
+    }
+    activeTheme = next;
+    applyThemeCss(THEMES[next]);
+    if (sfx && sfx.setTheme) sfx.setTheme(next);
+  }
+
+  function currentTheme() {
+    return THEMES[activeTheme] || THEMES[0];
+  }
+
   function applyLookPrefs() {
     var root = document.documentElement;
     root.setAttribute('data-pad', save.padSize);
     root.setAttribute('data-pad-side', save.padSide);
+    root.setAttribute('data-motion', reduceMotion ? 'reduce' : 'full');
     root.classList.toggle('contrast', highContrast);
+    if (reduceMotion) {
+      themeFade = 0;
+      enterT = 1;
+      winZoom = 0;
+      confetti = [];
+      var wc = document.getElementById('winConfetti');
+      if (wc) wc.innerHTML = '';
+    }
   }
 
   function persist() {
@@ -82,6 +234,19 @@
 
   var sfx = (function () {
     var ac = null;
+    var theme = 0;
+    var stepNotes = [300, 340, 260, 320, 220];
+    var pushNotes = [165, 190, 140, 175, 120];
+    var goalNotes = [
+      [880, 1320], [988, 1480], [784, 1176], [830, 1245], [698, 1046]
+    ];
+    var winNotes = [
+      [523.25, 659.25, 783.99, 1046.5],
+      [587.33, 739.99, 880, 1174.66],
+      [392, 493.88, 587.33, 783.99],
+      [440, 554.37, 659.25, 880],
+      [349.23, 440, 523.25, 698.46]
+    ];
 
     function ensure() {
       if (save.muted || save.volume <= 0.001) return null;
@@ -115,15 +280,23 @@
 
     return {
       init: function () { ensure(); },
-      step: function () { tone(300, 0.06, 'triangle', 0.03, 240); },
-      push: function () { tone(165, 0.1, 'sawtooth', 0.028, 110); },
+      setTheme: function (i) { theme = Math.max(0, Math.min(stepNotes.length - 1, i | 0)); },
+      step: function () {
+        var n = stepNotes[theme];
+        tone(n, 0.06, 'triangle', 0.03, n * 0.8);
+      },
+      push: function () {
+        var n = pushNotes[theme];
+        tone(n, 0.1, 'sawtooth', 0.028, n * 0.67);
+      },
       thud: function () { tone(85, 0.07, 'sine', 0.03); },
       goal: function () {
-        tone(880, 0.12, 'sine', 0.045);
-        tone(1320, 0.16, 'sine', 0.04, null, 0.07);
+        var n = goalNotes[theme];
+        tone(n[0], 0.12, 'sine', 0.045);
+        tone(n[1], 0.16, 'sine', 0.04, null, 0.07);
       },
       win: function () {
-        [523.25, 659.25, 783.99, 1046.5].forEach(function (f, i) {
+        winNotes[theme].forEach(function (f, i) {
           tone(f, 0.22, 'triangle', 0.045, null, i * 0.11);
         });
       },
@@ -169,9 +342,16 @@
   var elapsed = 0;
   var won = false;
   var particles = [];
+  var confetti = [];
+  var goalFlash = {};
   var shake = 0;
   var lastActivity = 0;
   var lastTimerPaint = 0;
+  var activeTheme = 0;
+  var prevThemeIndex = 0;
+  var themeFade = 0;
+  var enterT = 1;
+  var winZoom = 0;
 
   var view = { w: 0, h: 0 };
   var layout = { tile: 40, ox: 0, oy: 0 };
@@ -310,6 +490,7 @@
 
       if (goals.has(keyB)) {
         box.pulse = 1;
+        goalFlash[keyB] = 1;
         burst(bx, by, true);
         sfx.goal();
         buzz([16, 30, 20]);
@@ -394,6 +575,9 @@
     if (started) elapsed = performance.now() - startTs;
     started = false;
     shake = reduceMotion ? 0 : 1;
+    winZoom = 0;
+    spawnConfetti();
+    goals.forEach(function (g) { goalFlash[g] = 1; });
 
     goals.forEach(function (g) {
       var p = g.split(',');
@@ -406,7 +590,7 @@
     var prevStars = prev && prev.stars ? prev.stars : (prev ? 1 : 0);
     var timeSec = Math.round(elapsed / 100) / 10;
     var isRecord = !prev || moves < prev.moves || (moves === prev.moves && timeSec < prev.time);
-    var stars = Math.max(prevStars, starsForRun(prev, moves));
+    var stars = Math.max(prevStars, starsForRun(prev, moves, pushes));
     if (isRecord) {
       save.completed[levelIndex] = { moves: moves, time: timeSec, pushes: pushes, stars: stars };
     } else if (stars > prevStars) {
@@ -419,10 +603,13 @@
     var token = ++winToken;
     window.setTimeout(function () {
       if (!won || levelIndex !== lvl || token !== winToken) return;
-      $('winStats').textContent = moves + ' mosse · ' + pushes + ' spinte · ' + fmtTime(elapsed);
+      var par = parFor(levelIndex);
+      $('winStats').textContent = moves + ' mosse · ' + pushes + ' spinte · ' + fmtTime(elapsed) +
+        (par !== null ? ' · par ' + par + ' spinte' : '');
       $('winRecord').classList.toggle('hidden', !isRecord);
       $('winStars').innerHTML = starHtml(stars);
       $('winOverlay').classList.remove('hidden');
+      spawnWinConfetti();
       focusOverlay('winOverlay');
       announce('Livello completato. ' + stars + (stars === 1 ? ' stella' : ' stelle') + ' su 3.');
     }, 460);
@@ -430,9 +617,16 @@
     updateHud();
   }
 
-  // 1 stella alla prima vittoria; poi una in più se il record di mosse cala del 5% / 15%.
-  // I par ottimali per livello richiedono il solver (ancora da fare): qui si premia il miglioramento.
-  function starsForRun(prev, runMoves) {
+  // 1 stella alla prima vittoria. Con il par noto (par.js) la seconda arriva entro
+  // il 35% di spinte in più e la terza entro il 10%. Senza par si premia il
+  // miglioramento del record di mosse (5% / 15%), come prima.
+  function starsForRun(prev, runMoves, runPushes) {
+    var par = parFor(levelIndex);
+    if (par !== null) {
+      if (runPushes <= par + Math.max(1, Math.round(par * 0.10))) return 3;
+      if (runPushes <= par + Math.max(3, Math.round(par * 0.35))) return 2;
+      return 1;
+    }
     if (!prev || !prev.moves) return 1;
     var gain = (prev.moves - runMoves) / prev.moves;
     if (gain >= 0.15) return 3;
@@ -480,11 +674,18 @@
     startTs = 0;
     won = false;
     particles = [];
+    confetti = [];
+    var winConfettiLayer = document.getElementById('winConfetti');
+    if (winConfettiLayer) winConfettiLayer.innerHTML = '';
+    goalFlash = {};
     shake = 0;
     lastTimerPaint = 0;
+    enterT = reduceMotion ? 1 : 0;
+    winZoom = 0;
     noteActivity();
     ++winToken;
     staticDirty = true;
+    applyTheme(themeForLevel(levelIndex));
 
     save.lastLevel = levelIndex;
     persist();
@@ -552,7 +753,9 @@
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'lvl' + (i === levelIndex ? ' current' : '') + (save.completed[i] ? ' done' : '');
-      btn.title = 'Livello ' + (i + 1);
+      var par = parFor(i);
+      btn.title = 'Livello ' + (i + 1) + ' · ' + THEMES[themeForLevel(i)].name +
+        (par !== null ? ' · par ' + par + ' spinte' : '');
 
       var num = document.createElement('span');
       num.textContent = String(i + 1);
@@ -1643,6 +1846,7 @@
 
   function burst(tx, ty, big) {
     if (reduceMotion) return;
+    var th = currentTheme();
     var cx = layout.ox + (tx + 0.5) * layout.tile;
     var cy = layout.oy + (ty + 0.5) * layout.tile;
     var count = big ? 16 : 9;
@@ -1656,13 +1860,14 @@
         vy: Math.sin(angle) * speed - 40,
         life: 0.55 + Math.random() * 0.5,
         size: layout.tile * (0.035 + Math.random() * 0.045),
-        hue: big ? 190 : 45
+        hue: big ? th.burstHue : 45
       });
     }
   }
 
   function dust(tx, ty) {
     if (reduceMotion) return;
+    var th = currentTheme();
     var cx = layout.ox + (tx + 0.5) * layout.tile;
     var cy = layout.oy + (ty + 0.78) * layout.tile;
     for (var i = 0; i < 6; i++) {
@@ -1675,10 +1880,58 @@
         vy: Math.sin(angle) * speed * 0.5 - 12,
         life: 0.3 + Math.random() * 0.3,
         size: layout.tile * (0.012 + Math.random() * 0.018),
-        hue: 215,
-        sat: 16,
-        light: 74
+        hue: th.dustHue,
+        sat: th.dustSat,
+        light: th.dustLight
       });
+    }
+  }
+
+  function spawnConfetti() {
+    if (reduceMotion) return;
+    var th = currentTheme();
+    var colors = th.confetti || THEMES[0].confetti;
+    for (var i = 0; i < 54; i++) {
+      confetti.push({
+        x: Math.random() * view.w,
+        y: -20 - Math.random() * view.h * 0.25,
+        vx: (Math.random() - 0.5) * 180,
+        vy: 120 + Math.random() * 180,
+        w: 3 + Math.random() * 5,
+        h: 2 + Math.random() * 3,
+        rot: Math.random() * Math.PI * 2,
+        spin: (Math.random() - 0.5) * 10,
+        color: colors[i % colors.length]
+      });
+    }
+  }
+
+  function spawnWinConfetti() {
+    if (reduceMotion) return;
+    var overlay = $('winOverlay');
+    var layer = document.getElementById('winConfetti');
+    if (!layer) {
+      layer = document.createElement('div');
+      layer.id = 'winConfetti';
+      layer.className = 'win-confetti';
+      layer.setAttribute('aria-hidden', 'true');
+      overlay.appendChild(layer);
+    }
+    layer.innerHTML = '';
+    var th = currentTheme();
+    var fall = Math.max(240, stage.clientHeight + 60);
+    for (var i = 0; i < 28; i++) {
+      var piece = document.createElement('span');
+      piece.style.left = (Math.random() * 100).toFixed(2) + '%';
+      piece.style.background = th.confetti[i % th.confetti.length];
+      piece.style.width = (4 + Math.random() * 5).toFixed(1) + 'px';
+      piece.style.height = (7 + Math.random() * 7).toFixed(1) + 'px';
+      piece.style.setProperty('--drift', ((Math.random() - 0.5) * 140).toFixed(0) + 'px');
+      piece.style.setProperty('--rot', (360 + Math.random() * 720).toFixed(0) + 'deg');
+      piece.style.setProperty('--fall', fall.toFixed(0) + 'px');
+      piece.style.animationDelay = (Math.random() * 0.35).toFixed(2) + 's';
+      piece.style.animationDuration = (1.5 + Math.random() * 0.9).toFixed(2) + 's';
+      layer.appendChild(piece);
     }
   }
 
@@ -1695,11 +1948,101 @@
     ctx.closePath();
   }
 
-  function drawBackground() {
+  function mod(v, m) {
+    return ((v % m) + m) % m;
+  }
+
+  function drawAmbient(t, th, opacity) {
+    if (reduceMotion) return;
+    var cfg = {
+      dust: { nx: 12, dx: 0.9, dy: 0.18, size: [0.8, 1.8], shape: 'dot' },
+      snow: { nx: 12, dx: 0.35, dy: 1.6, size: [1.1, 2.6], shape: 'flake' },
+      sand: { nx: 11, dx: 2.4, dy: 0.08, size: [0.5, 1.0], shape: 'streak' },
+      fireflies: { nx: 8, dx: 0.5, dy: 0.4, size: [1.4, 2.8], shape: 'glow' },
+      stars: { nx: 15, dx: 0.08, dy: 0.04, size: [0.5, 1.6], shape: 'twinkle' }
+    }[th.ambient] || { nx: 12, dx: 0.9, dy: 0.18, size: [0.8, 1.8], shape: 'dot' };
+
+    var k = highContrast ? 0.35 : 1;
+    var scale = Math.min(1.5, Math.max(0.7, layout.tile / 44));
+    ctx.save();
+    ctx.fillStyle = th.ambientColor;
+    ctx.strokeStyle = th.ambientColor;
+    for (var layer = 0; layer < 3; layer++) {
+      var depth = 0.12 + layer * 0.2;
+      var count = Math.max(4, Math.round(cfg.nx * (0.5 + layer * 0.28)));
+      var speed = 0.35 + layer * 0.45;
+      var driftX = t * 0.001 * cfg.dx * speed * 26 + (player.vx || 0) * 2.6 * depth;
+      var driftY = t * 0.001 * cfg.dy * speed * 26 + (player.vy || 0) * 1.8 * depth;
+      for (var i = 0; i < count; i++) {
+        var seed = layer * 97 + i * 17 + activeTheme * 131;
+        var bx = hash2(seed, 3.1) * (view.w + 160) - 80;
+        var by = hash2(7.7, seed) * (view.h + 160) - 80;
+        var sway = Math.sin(t * 0.0007 + i * 1.7 + layer) * (cfg.shape === 'glow' ? 12 : 5);
+        var x = mod(bx + driftX + sway, view.w + 160) - 80;
+        var y = mod(by + driftY + Math.cos(t * 0.0005 + i) * 4, view.h + 160) - 80;
+        var size = (cfg.size[0] + hash2(seed, 11.3) * (cfg.size[1] - cfg.size[0])) * scale * (0.75 + layer * 0.2);
+        var alpha = k * opacity * (0.45 + 0.55 * hash2(seed, 5.9));
+
+        if (cfg.shape === 'dot') {
+          ctx.globalAlpha = alpha * 0.7;
+          ctx.beginPath();
+          ctx.arc(x, y, Math.max(0.5, size), 0, Math.PI * 2);
+          ctx.fill();
+        } else if (cfg.shape === 'flake') {
+          ctx.globalAlpha = alpha;
+          ctx.lineWidth = Math.max(0.5, size * 0.5);
+          ctx.beginPath();
+          ctx.moveTo(x - size, y);
+          ctx.lineTo(x + size, y);
+          ctx.moveTo(x, y - size);
+          ctx.lineTo(x, y + size);
+          ctx.stroke();
+        } else if (cfg.shape === 'streak') {
+          ctx.globalAlpha = alpha * 0.65;
+          ctx.lineWidth = Math.max(0.5, size * 0.6);
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + 7 + size * 5, y + size * 0.4);
+          ctx.stroke();
+        } else if (cfg.shape === 'glow') {
+          var pulse = 0.55 + 0.45 * Math.sin(t * 0.002 + i * 1.3);
+          ctx.globalAlpha = alpha * pulse;
+          ctx.beginPath();
+          ctx.arc(x, y, Math.max(0.6, size), 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = alpha * pulse * 0.25;
+          ctx.beginPath();
+          ctx.arc(x, y, Math.max(1.6, size * 3), 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          var tw = 0.35 + 0.65 * Math.abs(Math.sin(t * 0.0012 + seed));
+          ctx.globalAlpha = alpha * tw;
+          ctx.beginPath();
+          ctx.arc(x, y, Math.max(0.5, size), 0, Math.PI * 2);
+          ctx.fill();
+          if (size > 1.25) {
+            ctx.globalAlpha = alpha * tw * 0.5;
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(x - size * 2.2, y);
+            ctx.lineTo(x + size * 2.2, y);
+            ctx.moveTo(x, y - size * 2.2);
+            ctx.lineTo(x, y + size * 2.2);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawThemeBackdrop(t, th, opacity) {
+    ctx.save();
+    ctx.globalAlpha = opacity;
     var g = ctx.createLinearGradient(0, 0, view.w, view.h);
-    g.addColorStop(0, '#0a0f22');
-    g.addColorStop(0.55, '#0c132c');
-    g.addColorStop(1, '#111938');
+    g.addColorStop(0, th.bg[0]);
+    g.addColorStop(0.55, th.bg[1]);
+    g.addColorStop(1, th.bg[2]);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, view.w, view.h);
 
@@ -1707,18 +2050,21 @@
       view.w * 0.5, view.h * 0.32, 0,
       view.w * 0.5, view.h * 0.32, Math.max(view.w, view.h) * 0.75
     );
-    rg.addColorStop(0, 'rgba(96, 128, 255, 0.12)');
+    rg.addColorStop(0, th.glow);
     rg.addColorStop(1, 'rgba(0, 0, 0, 0)');
     ctx.fillStyle = rg;
     ctx.fillRect(0, 0, view.w, view.h);
+    ctx.restore();
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
-    for (var x = 22; x < view.w; x += 44) {
-      for (var y = 22; y < view.h; y += 44) {
-        ctx.beginPath();
-        ctx.arc(x, y, 1.2, 0, Math.PI * 2);
-        ctx.fill();
-      }
+    drawAmbient(t, th, opacity);
+  }
+
+  function drawBackground(t) {
+    var th = currentTheme();
+    drawThemeBackdrop(t, th, 1);
+    if (themeFade > 0.001) {
+      var prev = THEMES[prevThemeIndex] || th;
+      drawThemeBackdrop(t, prev, themeFade);
     }
   }
 
@@ -1816,6 +2162,7 @@
 
   function drawFloorTo(g, boardW, boardH) {
     var t = layout.tile;
+    var th = currentTheme();
     var i, x, y, px, py, k;
     for (i = 0; i < floorList.length; i++) {
       x = floorList[i][0];
@@ -1825,7 +2172,7 @@
 
       g.fillStyle = highContrast
         ? (((x + y) & 1) ? '#05080f' : '#080c18')
-        : (((x + y) & 1) ? '#131a34' : '#151d3b');
+        : (((x + y) & 1) ? th.floor[0] : th.floor[1]);
       g.fillRect(px, py, t, t);
 
       for (k = 0; k < 3; k++) {
@@ -1867,9 +2214,9 @@
     }
     g.clip();
     var lg = g.createLinearGradient(0, 0, boardW, boardH);
-    lg.addColorStop(0, 'rgba(140, 170, 235, 0.05)');
+    lg.addColorStop(0, th.floorLight);
     lg.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
-    lg.addColorStop(1, 'rgba(0, 0, 0, 0.10)');
+    lg.addColorStop(1, th.floorDark);
     g.fillStyle = lg;
     g.fillRect(0, 0, boardW, boardH);
     g.restore();
@@ -1888,6 +2235,7 @@
 
   function drawGoals(t) {
     var tile = layout.tile;
+    var th = currentTheme();
     var lockAnim = reduceMotion ? 0 : 0.3 + 0.7 * Math.sin(t * 0.004 + goals.size * 0.2);
     goals.forEach(function (key) {
       var p = key.split(',');
@@ -1897,30 +2245,44 @@
       var cy = layout.oy + (y + 0.5) * tile;
       var pulse = reduceMotion ? 0.5 : 0.5 + 0.5 * Math.sin(t * 0.0035 + x * 0.7 + y * 0.5);
       var occupied = boxAt.has(key);
+      var flash = goalFlash[key] || 0;
       var s = tile * 0.56;
-      var tone = occupied ? '255, 205, 100' : (highContrast ? '150, 245, 255' : '110, 231, 255');
+      var tone = occupied ? th.goalOn : (highContrast ? '150, 245, 255' : th.goal);
+
+      if (flash > 0.01) {
+        var ring = tile * (0.58 + (1 - flash) * 0.34);
+        ctx.fillStyle = 'rgba(' + th.goalBright + ', ' + (flash * 0.2).toFixed(3) + ')';
+        ctx.beginPath();
+        ctx.arc(cx, cy, ring, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(' + th.goalBright + ', ' + (flash * 0.8).toFixed(3) + ')';
+        ctx.lineWidth = Math.max(1, tile * 0.045 * flash);
+        ctx.beginPath();
+        ctx.arc(cx, cy, ring, 0, Math.PI * 2);
+        ctx.stroke();
+      }
 
       if (occupied) {
         // Anello esterno "lock" pulsante quando la cassa è sul target
         var gg = ctx.createRadialGradient(cx, cy, tile * 0.05, cx, cy, tile * 0.64);
-        gg.addColorStop(0, 'rgba(255, 205, 90, 0.18)');
-        gg.addColorStop(0.4, 'rgba(255, 180, 60, 0.35)');
-        gg.addColorStop(1, 'rgba(255, 205, 90, 0)');
+        gg.addColorStop(0, 'rgba(' + th.goalOn + ', 0.18)');
+        gg.addColorStop(0.4, 'rgba(' + th.goalOn + ', 0.35)');
+        gg.addColorStop(1, 'rgba(' + th.goalOn + ', 0)');
         ctx.fillStyle = gg;
         ctx.beginPath();
         ctx.arc(cx, cy, tile * 0.64, 0, Math.PI * 2);
         ctx.fill();
 
         // Lock icona (quadrato con angoli arrotondati) che pulsa
-        ctx.fillStyle = 'rgba(255, 190, 85, ' + (0.18 + lockAnim * 0.22).toFixed(3) + ')';
-        ctx.strokeStyle = 'rgba(255, 180, 60, ' + (0.4 + lockAnim * 0.3).toFixed(3) + ')';
+        ctx.fillStyle = 'rgba(' + th.goalOn + ', ' + (0.18 + lockAnim * 0.22).toFixed(3) + ')';
+        ctx.strokeStyle = 'rgba(' + th.goalOn + ', ' + (0.4 + lockAnim * 0.3).toFixed(3) + ')';
         ctx.lineWidth = Math.max(1, tile * 0.032);
         rr(cx - tile * 0.18, cy - tile * 0.18, tile * 0.36, tile * 0.36, tile * 0.08);
         ctx.fill();
         ctx.stroke();
-        
+
         // Punto al centro del lock
-        ctx.fillStyle = 'rgba(255, 240, 180, ' + (0.7 + lockAnim * 0.3).toFixed(3) + ')';
+        ctx.fillStyle = 'rgba(' + th.goalBright + ', ' + (0.7 + lockAnim * 0.3).toFixed(3) + ')';
         ctx.beginPath();
         ctx.arc(cx + tile * 0.08, cy, tile * 0.05, 0, Math.PI * 2);
         ctx.fill();
@@ -1936,7 +2298,7 @@
       ctx.save();
       ctx.shadowColor = 'rgba(' + tone + ', 0.9)';
       ctx.shadowBlur = tile * 0.35;
-      ctx.fillStyle = 'rgba(' + (occupied ? '255, 246, 210' : '180, 248, 255') + ', ' + (0.6 + 0.3 * pulse).toFixed(3) + ')';
+      ctx.fillStyle = 'rgba(' + (occupied ? th.goalOn : th.goalBright) + ', ' + (0.6 + 0.3 * pulse).toFixed(3) + ')';
       ctx.beginPath();
       ctx.arc(cx, cy, tile * (0.085 + 0.02 * pulse), 0, Math.PI * 2);
       ctx.fill();
@@ -1947,6 +2309,7 @@
   function drawWallsTo(g, boardW, boardH) {
     if (!walls.size) return;
     var t = layout.tile;
+    var th = currentTheme();
     var lift = Math.max(2, t * 0.09);
     var r = Math.min(t * 0.2, 10);
 
@@ -1973,8 +2336,8 @@
 
     wallPath(lift);
     var sg = g.createLinearGradient(0, 0, 0, boardH);
-    sg.addColorStop(0, '#111833');
-    sg.addColorStop(1, '#060a16');
+    sg.addColorStop(0, th.wallShadow[0]);
+    sg.addColorStop(1, th.wallShadow[1]);
     g.fillStyle = sg;
     g.fill();
 
@@ -1985,9 +2348,9 @@
       tg.addColorStop(0.5, '#96a8ef');
       tg.addColorStop(1, '#7285cc');
     } else {
-      tg.addColorStop(0, '#6a7aba');
-      tg.addColorStop(0.5, '#4e5b98');
-      tg.addColorStop(1, '#343f70');
+      tg.addColorStop(0, th.wall[0]);
+      tg.addColorStop(0.5, th.wall[1]);
+      tg.addColorStop(1, th.wall[2]);
     }
     g.fillStyle = tg;
     g.fill();
@@ -1999,7 +2362,7 @@
       boardW * 0.22, -boardH * 0.1, 0,
       boardW * 0.32, boardH * 0.28, Math.max(boardW, boardH) * 0.85
     );
-    rg.addColorStop(0, 'rgba(226, 238, 255, 0.15)');
+    rg.addColorStop(0, th.wallEdge);
     rg.addColorStop(1, 'rgba(0, 0, 0, 0)');
     g.fillStyle = rg;
     g.fillRect(0, 0, boardW, boardH);
@@ -2023,7 +2386,7 @@
     g.restore();
 
     g.lineCap = 'butt';
-    g.strokeStyle = highContrast ? 'rgba(255, 255, 255, 0.92)' : 'rgba(214, 229, 255, 0.46)';
+    g.strokeStyle = highContrast ? 'rgba(255, 255, 255, 0.92)' : th.wallEdge;
     g.lineWidth = Math.max(1, t * (highContrast ? 0.05 : 0.032));
     g.beginPath();
     walls.forEach(function (key) {
@@ -2051,7 +2414,7 @@
     });
     g.stroke();
 
-    g.strokeStyle = 'rgba(6, 9, 20, 0.5)';
+    g.strokeStyle = th.wallLine;
     g.lineWidth = Math.max(1, t * 0.028);
     g.beginPath();
     walls.forEach(function (key) {
@@ -2521,14 +2884,27 @@
     }
   }
 
+  function drawConfetti() {
+    for (var i = 0; i < confetti.length; i++) {
+      var c = confetti[i];
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.rotate(c.rot);
+      ctx.fillStyle = c.color;
+      ctx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h);
+      ctx.restore();
+    }
+  }
+
   function drawLighting() {
+    var th = currentTheme();
     var lg = ctx.createRadialGradient(
       view.w * 0.18, view.h * 0.08, 0,
       view.w * 0.3, view.h * 0.2, Math.max(view.w, view.h) * 0.95
     );
-    lg.addColorStop(0, 'rgba(150, 190, 255, 0.055)');
+    lg.addColorStop(0, th.light);
     lg.addColorStop(0.45, 'rgba(0, 0, 0, 0)');
-    lg.addColorStop(1, 'rgba(0, 0, 0, 0.16)');
+    lg.addColorStop(1, th.vignette);
     ctx.fillStyle = lg;
     ctx.fillRect(0, 0, view.w, view.h);
   }
@@ -2553,9 +2929,13 @@
     ctx.restore();
   }
 
+  function easeOutCubic(x) {
+    return 1 - Math.pow(1 - x, 3);
+  }
+
   function render(t) {
     ctx.clearRect(0, 0, view.w, view.h);
-    drawBackground();
+    drawBackground(t);
     if (!level.w) return;
 
     var sx = 0;
@@ -2565,17 +2945,24 @@
       sy = Math.cos(t * 0.065) * shake * 4;
     }
 
+    var settle = reduceMotion ? 1 : easeOutCubic(enterT);
+    var off = reduceMotion ? 0 : (1 - settle) * Math.min(64, view.h * 0.06);
+    var zoom = 1 + (reduceMotion ? 0 : winZoom * 0.04);
+    var boardW = level.w * layout.tile;
+    var boardH = level.h * layout.tile;
+    var bcx = layout.ox + boardW / 2;
+    var bcy = layout.oy + boardH / 2;
+
     ctx.save();
-    ctx.translate(sx, sy);
+    ctx.globalAlpha = reduceMotion ? 1 : 0.25 + 0.75 * settle;
+    ctx.translate(sx + bcx, sy + bcy + off);
+    ctx.scale(zoom, zoom);
+    ctx.translate(-bcx, -bcy);
 
     drawBoard();
     if (staticDirty) buildStaticBoard();
     if (staticBoard) {
-      ctx.drawImage(
-        staticBoard,
-        layout.ox, layout.oy,
-        level.w * layout.tile, level.h * layout.tile
-      );
+      ctx.drawImage(staticBoard, layout.ox, layout.oy, boardW, boardH);
     }
     drawGoals(t);
     drawGhosts();
@@ -2587,6 +2974,7 @@
     drawPlayerFigure(pose, t);
     drawDustMarks(t);
     drawParticles();
+    drawConfetti();
 
     ctx.restore();
     drawLighting();
@@ -2625,6 +3013,24 @@
 
     if (player.bump > 0) player.bump = Math.max(0, player.bump - dt * 3.5);
     if (shake > 0) shake = Math.max(0, shake - dt * 1.8);
+    if (themeFade > 0) themeFade = Math.max(0, themeFade - dt * 2.4);
+    if (enterT < 1) enterT = Math.min(1, enterT + dt * 3.6);
+    if (winZoom < 1) winZoom = Math.min(1, winZoom + dt * 0.85);
+
+    for (var gk in goalFlash) {
+      goalFlash[gk] -= dt * 2.2;
+      if (goalFlash[gk] <= 0) delete goalFlash[gk];
+    }
+
+    for (var ci = confetti.length - 1; ci >= 0; ci--) {
+      var cf = confetti[ci];
+      cf.vy += 380 * dt;
+      cf.vx *= 1 - 0.7 * dt;
+      cf.x += cf.vx * dt;
+      cf.y += cf.vy * dt;
+      cf.rot += cf.spin * dt;
+      if (cf.y > view.h + 40 || cf.x < -80 || cf.x > view.w + 80) confetti.splice(ci, 1);
+    }
 
     if (started) {
       elapsed = performance.now() - startTs;
@@ -2792,6 +3198,7 @@
   $('setMotion').addEventListener('change', function () {
     save.motion = this.checked ? 'reduce' : 'auto';
     reduceMotion = save.motion === 'reduce' || (save.motion !== 'full' && osReduce);
+    applyLookPrefs();
     persist();
     syncSettingsUi();
     sfx.ui();

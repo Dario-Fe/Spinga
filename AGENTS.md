@@ -34,6 +34,10 @@ D-pad in basso a destra, pulsante Sclera per la pausa commemorativa.
 - `style.css` — tema scuro glass, layout responsive, media query.
 - `game.js` — IIFE con stato, input, audio, salvataggi, rendering Canvas 2D.
 - `levels.js` — 50 livelli in formato XSB in `window.LEVELS`.
+- `par.js` — par delle spinte per livello in `window.LEVELS_PAR` (`{ par, ex }` o `null`),
+  generato da `tools/solve.js`.
+- `tools/solve.js` — solutore offline: A* esatto sulle spinte, beam e greedy di riserva,
+  con `--map`/`--stats` per la diagnosi.
 - `manifest.webmanifest`, `sw.js`, `icons/` — PWA: manifest, service worker, icone 180/192/512.
 - `releases/` — copie congelate e verificate delle release (una cartella per fase, con
   README). Restano solo in locale: sono in `.gitignore`.
@@ -72,6 +76,14 @@ D-pad in basso a destra, pulsante Sclera per la pausa commemorativa.
 - `staticBoard`: cache offscreen di **solo** pavimento e muri. Casse, giocatore, obiettivi
   animati e ombre si ridisegnano a ogni frame (altrimenti restano scie); la cache si
   ricostruisce dal cambio livello e dal resize (`computeLayout`), non a ogni mossa.
+- Temi: `THEMES` e `themeForLevel(i) = floor(i / 10)` in `game.js` (Magazzino, Ghiaccio,
+  Deserto, Giardino notturno, Spazio). `applyTheme()` aggiorna palette canvas, variabili
+  CSS `--accent`/`--accent-2`/`--gold`, sfondo del body e `theme-color`; `drawBackground`
+  fa il crossfade con `themeFade`, `drawAmbient` anima polvere/neve/sabbia/lucciole/stelle.
+- Polish: `goalFlash` per il flash dei target, `confetti` canvas più un layer DOM
+  `winConfetti` sopra l'overlay di vittoria, `enterT` per fade/slide tra livelli e
+  `winZoom` per lo zoom lento. Con `reduceMotion` restano solo le dissolvenze brevi:
+  niente particelle, transizioni di campo, zoom o coriandoli.
 - Overlay: menu iniziale (Continua / Livelli / Impostazioni, riaperto con Esc), vittoria
   (record e stelle), selezione livelli, conferma restart, pausa e Sclera; `levelsOpen()`
   blocca i movimenti e il focus resta intrappolato nel dialogo visibile (`trapTab`).
@@ -85,8 +97,9 @@ D-pad in basso a destra, pulsante Sclera per la pausa commemorativa.
   disegna le ultime 3 celle del giocatore. Restart chiede conferma oltre 20 mosse.
 - Pausa: `P`, pulsante e `visibilitychange`; il timer si basa su `elapsed` e non conta il
   tempo in background. Vibrazione (`buzz`) e D-pad (dimensione/lato) sono nelle impostazioni.
-- Stelle su record personali (`starsForRun`): 1 alla vittoria, +1 per record migliorato
-  del 5% e del 15%; record con spinte e stelle in `save.completed[i]`.
+- Stelle (`starsForRun`): 1 alla vittoria; con par noto (`par.js`) la seconda entro il
+  35% di spinte in più e la terza entro il 10%, altrimenti resta il record personale
+  (5% / 15%). Record con mosse, spinte e stelle in `save.completed[i]`.
 - Fullscreen su `.app` (pulsante, impostazioni, tasto F).
 - PWA: manifest iniettato e service worker registrato solo via http(s); con `file://`
   il gioco è comunque offline e non produce errori CORS.
@@ -109,12 +122,17 @@ D-pad in basso a destra, pulsante Sclera per la pausa commemorativa.
   D-pad su mobile, alto contrasto, regressione livello 1).
 - Effetto Sclera: `node C:\Users\Archivio\AppData\Local\Temp\opencode\cstest\rage-test.js`
   (popup, pausa e timer fermo, chiusura manuale/Esc, fine automatica, mobile, zero errori).
+- Temi e polish: `node C:\Users\Archivio\AppData\Local\Temp\opencode\cstest\theme-test.js`
+  (i 5 temi su livelli 1/11/21/31/41, accent e `theme-color`, vittoria 230/97 con stelle,
+  screenshot, zero errori) e `theme-mobile-test.js` (portrait 390×844 e landscape 844×390).
 - Layout smartphone e D-pad: `node C:\Users\Archivio\AppData\Local\Temp\opencode\cstest\check-mobile.js`
   (campo intero e nessuna sovrapposizione con il D-pad in 390×844, 320×568, 740×360,
   844×390, anche con D-pad grande e a sinistra).
 - Vibrazione: `node C:\Users\Archivio\AppData\Local\Temp\opencode\cstest\check-haptics.js`
   (stub di `navigator.vibrate`: tick sul passo, spinta, target, vittoria con la soluzione
   del livello 1; zero chiamate con la vibrazione spenta, prova `[40,60,40]` dal menu).
+- Par e stelle: `node tools/solve.js` (tabella; `--write` rigenera `par.js`); verifica
+  browser in temp `par-test.js` (livello 1: 3 stelle, par in vittoria, zero errori).
 - Dopo ogni modifica a grafica o input: verificare desktop, viewport mobile e landscape,
   vittoria livello 1, undo, restart, persistenza record.
 - La cartella temp può essere pulita dal sistema: se mancano gli script, ricrearli o
@@ -280,11 +298,51 @@ se non si sente nulla, controllare il permesso del browser e il toggle nelle imp
   Sclera aperto, timer fermo, chiusura con Esc e ripresa senza mosse perse).
   Cache-busting e service worker a `v17`.
 
+## 2026-11-17 — Solutore offline e par delle spinte
+
+- Aggiunto `tools/solve.js`: A* sulle spinte con celle morte (BFS inversa sul grafo
+  delle spinte), deadlock delle casse congelate ed euristica di assegnamento ottimo
+  casse→target; beam search e greedy come ripieghi; `--map`, `--stats`, `--exact`.
+- `par.js` (`window.LEVELS_PAR`) con `{ par, ex }`: `ex` dice se il minimo è dimostrato,
+  `null` dove non c'è par.
+- In gioco: 3 stelle se le spinte stanno entro par +10%, 2 entro par +35%, 1 alla
+  vittoria; senza par resta il criterio del record personale. Par mostrato nella
+  vittoria e nel titolo dei livelli.
+- Verifiche: livello 1 con par **97 spinte**, identico alle spinte della soluzione di
+  riferimento (230 mosse / 97 spinte); test browser `par-test.js` verde (50 voci, titolo
+  con par, 3 stelle, par nell'overlay, record 230/97, zero errori console).
+  Cache-busting e service worker a `v18`.
+- **Limite noto**: il par è dimostrato solo dove A* chiude, oggi il solo livello 1.
+  I livelli con 10–34 casse non sono alla portata di una ricerca rapida; per quelli
+  `par.js` contiene `null` e le stelle tornano al criterio del record.
+- **Livello 2 risolvibile**: la ricerca di default non lo chiude, ma con beam largo sì.
+  `$env:MAX_STATES='1'; $env:MAX_MS='120000'; $env:BEAM='10000';
+  $env:GREEDY_TRIES='0'; node tools/solve.js --only 2` trova `par 133` in ~22 s con
+  ~8 milioni di stati. `BEAM=5000` fallisce; non modificare i livelli per questo.
+
+## 2026-11-18 — Temi e polish Fase 1
+
+- Aggiunti i 5 temi automatici ogni 10 livelli: Magazzino, Ghiaccio, Deserto, Giardino
+  notturno, Spazio. Palette canvas (pavimento, muri, target, luce, vignettatura), colori
+  CSS (`--accent`, `--accent-2`, `--gold`), sfondo del body e `theme-color`.
+- Transizioni: crossfade del fondale con `themeFade`, fade/slide del campo con `enterT`,
+  zoom lento alla vittoria con `winZoom`.
+- Particelle ambientali procedurali in `drawAmbient` (polvere, neve, sabbia, lucciole,
+  stelle) con tre livelli di parallasse e spostamento legato al movimento del giocatore.
+- Polish: flash del target con `goalFlash`, coriandoli canvas sul campo e layer DOM
+  `winConfetti` sopra l'overlay di vittoria, temi sonori per passo/spinta/target/vittoria.
+- Rispetto di `prefers-reduced-motion` e dell'impostazione animazioni ridotte: niente
+  particelle, transizioni, zoom o coriandoli. Alto contrasto invariato.
+- Verifiche: `theme-test.js` (5 temi, `theme-color`, vittoria 230/97, 3 stelle, zero
+  errori) e `theme-mobile-test.js` (portrait 390×844, landscape 844×390); `node --check
+  game.js`. Cache-busting e service worker a `v19`.
+
 ## Prossimi passi
 
 Vedi `ROADMAP.md`, ordine consigliato:
-1. Chiudere la Fase 1: temi, polish effetti, retro pixel, impronte di polvere.
-2. Fase 2 residua: hint/solver (anche per i par), progressi esportabili, test completi.
+1. Copertura dei par: il livello 2 è risolvibile con beam largo (`par 133`), ma il
+   default del solver è troppo stretto; poi hint in gioco.
+2. Fase 2 residua: progressi esportabili, test completi sui 50 livelli.
 3. Fase 3: editor, build `.exe`, localizzazione.
 
 Repository: `README.md` è la vetrina, `LICENSE` copre il codice, `releases/` resta locale.

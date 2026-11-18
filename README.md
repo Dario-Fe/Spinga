@@ -35,8 +35,11 @@ Si apre e si gioca, anche da una chiavetta USB.
 - **50 livelli** a difficoltà crescente, su griglie fino a 20×16.
 - **Annulla e ripeti** illimitati, con ghost delle ultime posizioni e conferma prima di
   buttare via un tentativo lungo.
-- **Stelle e record** per livello: una alla vittoria, le altre migliorando le tue mosse.
+- **Par e stelle** per livello: dove il solver conosce il par delle spinte, la seconda stella arriva entro il 35% e la terza entro il 10%; altrove vale il miglioramento del record.
 - **Timer con pausa** che non conta il tempo passato in background.
+- **Cinque temi** ogni dieci livelli — Magazzino, Ghiaccio, Deserto, Giardino notturno,
+  Spazio — con palette, particelle ambientali, suoni e transizioni dedicate.
+- **Polish**: flash sui target, coriandoli, zoom lento alla vittoria, fade/slide tra livelli.
 - **Audio generato** in WebAudio: passi, spinte, target, vittoria. Mutabile, volume
   regolabile, tutto persistito.
 - **PWA installabile**: manifest, service worker e cache offline quando il gioco è servito
@@ -102,13 +105,15 @@ branch `main`, cartella `/ (root)`. Nessun build step, nessun workflow da aggiun
 ```text
 Spinga/
 ├── index.html            # UI: HUD, canvas, overlay, D-pad
-├── style.css             # tema scuro glass, responsive, alto contrasto
+├── style.css             # temi, layout responsive, alto contrasto
 ├── game.js               # motore, input, audio, salvataggi, rendering Canvas 2D
 ├── levels.js             # i 50 livelli in formato testuale XSB
+├── par.js                # par delle spinte per livello (generato)
 ├── manifest.webmanifest  # PWA
 ├── sw.js                 # service worker, cache offline
 ├── icons/                # icone 180 / 192 / 512
 ├── docs/                 # screenshot del README
+├── tools/solve.js        # solutore offline: calcola il par delle spinte
 ├── ROADMAP.md            # idee e fasi di sviluppo
 ├── AGENTS.md             # note di progetto e architettura
 └── LICENSE               # MIT (codice)
@@ -124,8 +129,12 @@ Tutto gira in un solo IIFE, senza framework:
   giocatore e particelle sono disegnati a ogni frame.
 - I muri sono fusi con marching squares, con ambient occlusion, ombre proiettate e
   vignettatura; le casse hanno venature procedurali, angoli metallici e squash alla spinta.
+- I temi cambiano palette canvas e CSS, suoni e particelle ambientali ogni dieci livelli;
+  transizioni, flash target, coriandoli e zoom della vittoria rispettano le animazioni ridotte.
 - Il protagonista è disegnato proceduralmente in quattro direzioni, con transpallet e
   forcelle che si accorciano contro i muri.
+- `tools/solve.js` calcola offline il par delle spinte (A* con celle morte e deadlock);
+  `par.js` ne contiene il risultato e `starsForRun` lo usa quando c'è.
 
 ## Salvataggi
 

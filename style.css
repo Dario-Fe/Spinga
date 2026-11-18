@@ -1,5 +1,5 @@
 /* Spinga — Fase 2: stelle, menu, impostazioni, fullscreen */
-/* Cache-busting: ?v=17 */
+/* Cache-busting: ?v=19 */
 
 :root {
   color-scheme: dark;
@@ -12,6 +12,11 @@
   --accent-2: #a78bfa;
   --gold: #ffcf6b;
   --ok: #34d399;
+  --theme-bg-1: #080c1a;
+  --theme-bg-2: #0a1024;
+  --theme-bg-3: #0d1430;
+  --theme-glow: rgba(92, 124, 255, 0.22);
+  --theme-glow-2: rgba(167, 139, 250, 0.18);
   --radius: 16px;
 }
 
@@ -25,11 +30,15 @@ body {
   color: var(--text);
   font-family: "Segoe UI Variable", "Segoe UI", Inter, system-ui, -apple-system, sans-serif;
   background:
-    radial-gradient(1200px 800px at 12% -10%, rgba(92, 124, 255, 0.22), transparent 60%),
-    radial-gradient(900px 700px at 108% 15%, rgba(167, 139, 250, 0.18), transparent 55%),
-    linear-gradient(160deg, #080c1a 0%, #0a1024 55%, #0d1430 100%);
+    radial-gradient(1200px 800px at 12% -10%, var(--theme-glow), transparent 60%),
+    radial-gradient(900px 700px at 108% 15%, var(--theme-glow-2), transparent 55%),
+    linear-gradient(160deg, var(--theme-bg-1) 0%, var(--theme-bg-2) 55%, var(--theme-bg-3) 100%);
+  transition: background 0.6s ease;
   -webkit-font-smoothing: antialiased;
 }
+
+html[data-motion="reduce"] body { transition: none; }
+html[data-motion="reduce"] .win-confetti { display: none; }
 
 .app {
   height: 100vh;
@@ -251,6 +260,24 @@ canvas {
 
 .overlay.hidden { display: none; }
 
+.win-confetti {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.win-confetti span {
+  position: absolute;
+  top: -16px;
+  border-radius: 2px;
+  opacity: 0.95;
+  animation: winConfettiFall 1.8s cubic-bezier(0.2, 0.6, 0.4, 1) forwards;
+}
+
+.overlay .card { position: relative; z-index: 2; }
+
 .card {
   width: min(440px, 100%);
   padding: 26px 24px;
@@ -470,6 +497,11 @@ canvas {
 @keyframes pop {
   from { transform: scale(0.92); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes winConfettiFall {
+  from { transform: translate3d(0, -8px, 0) rotate(0); opacity: 0.95; }
+  to { transform: translate3d(var(--drift, 0px), var(--fall, 600px), 0) rotate(var(--rot, 540deg)); opacity: 0; }
 }
 
 /* ---------- Responsive ---------- */
